@@ -1,0 +1,154 @@
+name: scanpy
+steps:
+    - id: retrieve-scxa
+      inputs:
+          accession: E-GEOD-100058
+      outputs:
+          matrix_mtx: null
+          genes_tsv: null
+          barcode_tsv: null
+    - id: scanpy-read-10x
+      inputs:
+          matrix: 0|matrix_mtx
+          genes: 0|genes_tsv
+          barcodes: 0|barcode_tsv
+          var_names: gene_ids
+          output_format: anndata
+      outputs:
+          output_h5: null
+    - id: scanpy-filter-cells
+      inputs:
+          input_obj_file: 1|output_h5
+          input_format: anndata
+          output_format: anndata
+          parameters_0|name: n_genes
+          parameters_0|min: 200
+          parameters_0|max: 2500
+      outputs:
+          output_h5: null
+    - id: scanpy-filter-genes
+      inputs:
+          input_obj_file: 2|output_h5
+          input_format: anndata
+          output_format: anndata
+          parameters_0|name: n_cells
+          parameters_0|min: 3
+          parameters_0|max: 10000000
+      outputs:
+          output_h5: null
+    - id: scanpy-normalise-data
+      inputs:
+          input_obj_file: 3|output_h5
+          input_format: anndata
+          output_format: anndata
+          scale_factor: 10000
+          save_raw: true
+      outputs:
+          output_h5: null
+    - id: scanpy-find-variable-genes
+      inputs:
+          input_obj_file: 4|output_h5
+          input_format: anndata
+          output_format: anndata
+          flavor: seurat
+          n_bin: 20
+          parameters_0|name: mean
+          parameters_0|min: 0.0125
+          parameters_0|max: 3
+          parameters_1|name: disp
+          parameters_1|min: 0.5
+          parameters_1|max: 10000000
+      outputs:
+          output_h5: null
+    - id: scanpy-scale-data
+      inputs:
+          input_obj_file: 5|output_h5
+          input_format: anndata
+          output_format: anndata
+          do_log: true
+          zero_center: true
+          scale_max: 10
+      outputs:
+          output_h5: null
+    - id: scanpy-run-pca
+      inputs:
+          input_obj_file: 6|output_h5
+          input_format: anndata
+          output_format: anndata
+          extra_outputs: embeddings
+          n_pc: 50
+          zero_center: true
+          svd_solver: arpack
+          seed: 0
+          chunked: false
+          do_plotting|plot: true
+          do_plotting|color_by: n_genes
+      outputs:
+          output_h5: null
+          output_embed: null
+          output_png: null
+    - id: scanpy-compute-graph
+      inputs:
+          input_obj_file: 7|output_h5
+          input_format: anndata
+          output_format: anndata
+          settings_default|default: true
+      outputs:
+          output_h5: null
+    - id: scanpy-find-cluster
+      inputs:
+          input_obj_file: 8|output_h5
+          input_format: anndata
+          output_format: anndata
+          output_txt: true
+          settings_default|default: true
+      outputs:
+          output_h5: null
+          output_txt: null
+    - id: scanpy-run-umap
+      inputs:
+          input_obj_file: 9|output_h5
+          input_format: anndata
+          output_format: anndata
+          embeddings: true
+          settings_default|default: true
+          do_plotting|plot: true
+          do_plotting|color_by: louvain
+      outputs:
+          output_h5: null
+          output_png: null
+          output_embed: null
+    - id: scanpy-run-tsne
+      inputs:
+          input_obj_file: 9|output_h5
+          input_format: anndata
+          output_format: anndata
+          embeddings: true
+          settings_default|default: true
+          do_plotting|plot: true
+          do_plotting|color_by: louvain
+      outputs:
+          output_h5: null
+          output_png: null
+          output_embed: null
+    - id: scanpy-find-markers
+      inputs:
+          input_obj_file: 9|output_h5
+          input_format: anndata
+          output_format: anndata
+          output_csv: true
+          n_genes: 50
+          output_markers: true
+          settings_default|default: true
+      outputs:
+          output_h5: null
+#    - id: run-sccaf
+#      inputs:
+#          sccaf_lib: null
+#          input_obj_file: null
+#          use_tsv: false
+#          obj_attr: louvain
+#          optimise: true
+#          from_input: true
+#      outputs:
+#          output_png: null
